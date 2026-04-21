@@ -5,6 +5,7 @@ from databases.business_todo.src.api.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
 @router.post("/login")
 def login(request: dict):
     try:
@@ -14,6 +15,7 @@ def login(request: dict):
         )
     except ValidationError as e:
         raise HTTPException(status_code=400, detail={e.field: e.message} if e.field else e.message)
+
 
 @router.post("/register")
 def register(request: dict):
@@ -29,12 +31,14 @@ def register(request: dict):
     except ValidationError as e:
         raise HTTPException(status_code=400, detail={e.field: e.message} if e.field else e.message)
 
+
 @router.post("/logout")
 def logout(current_user: dict = Depends(get_current_user)):
     try:
         return AuthService.logout(current_user["user_id"])
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=e.message)
+
 
 @router.post("/refresh")
 def refresh(request: dict):

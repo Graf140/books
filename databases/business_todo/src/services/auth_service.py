@@ -1,6 +1,7 @@
 from datetime import timedelta
 
-from databases.business_todo.src.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, \
+from databases.business_todo.src.core.security import verify_password, get_password_hash, create_access_token, \
+    create_refresh_token, \
     decode_token
 from databases.business_todo.src.core.config import settings
 from databases.business_todo.src.repositories.user_repo import UserRepository
