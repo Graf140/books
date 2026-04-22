@@ -131,9 +131,12 @@ class TaskService:
             raise ValidationError("Not enough permissions")
 
         validated = {}
-        for field in allowed_fields:
-            if field in update_data and update_data[field] is not None:
-                validated[field] = update_data[field]
+        for field, value in update_data.items():
+            if value is None:
+                continue
+            if field not in allowed_fields:
+                raise ValidationError(f"Cannot update {field}")
+            validated[field] = value
 
         if not validated:
             return task
@@ -141,40 +144,40 @@ class TaskService:
         return TaskRepository.update(task_id, **validated)
 
 
-@staticmethod
-def delete_task(task_id: int, current_user: dict) -> dict:
-    """Удалить задачу (владелец или admin)"""
-    task = TaskRepository.get_by_id(task_id)
+    @staticmethod
+    def delete_task(task_id: int, current_user: dict) -> dict:
+        """Удалить задачу (владелец или admin)"""
+        task = TaskRepository.get_by_id(task_id)
 
-    if not task:
-        raise ValidationError("Task not found")
+        if not task:
+            raise ValidationError("Task not found")
 
-    if current_user["role"] != "admin" and task["customer_id"] != current_user["user_id"]:
-        raise ValidationError("Not enough permissions")
+        if current_user["role"] != "admin" and task["customer_id"] != current_user["user_id"]:
+            raise ValidationError("Not enough permissions")
 
-    TaskRepository.delete(task_id)
-    return {"message": "Task deleted"}
+        TaskRepository.delete(task_id)
+        return {"message": "Task deleted"}
 
 
-@staticmethod
-def claim_task(task_id: int, current_user: dict) -> dict:
-    if current_user["role"] != "executor":
-        raise ValidationError("Only executors can claim tasks")
+    @staticmethod
+    def claim_task(task_id: int, current_user: dict) -> dict:
+        if current_user["role"] != "executor":
+            raise ValidationError("Only executors can claim tasks")
 
-    task = TaskRepository.get_by_id(task_id)
-    if not task:
-        raise ValidationError("Task not found")
+        task = TaskRepository.get_by_id(task_id)
+        if not task:
+            raise ValidationError("Task not found")
 
-    if task["status"] != "new":
-        raise ValidationError(f"Cannot claim task with status '{task['status']}'")
+        if task["status"] != "new":
+            raise ValidationError(f"Cannot claim task with status '{task['status']}'")
 
-    if task["executor_id"] is not None and task["executor_id"] != current_user["user_id"]:
-        raise ValidationError("Task is already assigned to another executor")
+        if task["executor_id"] is not None and task["executor_id"] != current_user["user_id"]:
+            raise ValidationError("Task is already assigned to another executor")
 
-    updated = TaskRepository.update(
-        task_id,
-        executor_id=current_user["user_id"],
-        status="in_progress"
-    )
+        updated = TaskRepository.update(
+            task_id,
+            executor_id=current_user["user_id"],
+            status="in_progress"
+        )
 
-    return updated
+        return updated
